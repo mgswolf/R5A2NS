@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  pg:
+    image: postgres:9.4
+    ports:
+      - "54320:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  # db:
+  #   image: mysql:5.7
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: 123844
+  #   ports:
+  #     - "3307:3306"
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql/data
+  #     - "./mysql_conf:/etc/mysql/conf.d"
+
+  web:
+    build: .
+    ports:
+      - "3002:3000"
+    depends_on:
+      - pg
+    links:
+      - pg
+    volumes:
+      - bundle_cache:/bundle
+      - ./task-manager-api:/app/task-manager-api
+    command: bundle exec rails s -b 0.0.0.0 -p 3000
+    env_file:
+      - .env
+
+  nodejs:
+    build: ./front/
+    # depends_on:
+    #   - web
+    ports:
+      - "4200:4200"
+    volumes:
+      - './front/app:/app'
+      - 'node-pkg-data:/npm-packages'
+    environment:
+      NPM_PACKAGES: "/npm-packages"
+    working_dir: /app/projeto-base-task-manager-angular
+    command: ng serve --host 0.0.0.0
+    tty: true
+
+volumes:
+  bundle_cache:
+  pg-data:
+  node-pkg-data:
